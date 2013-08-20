@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Profback.com</title>
+        <style></style>
+  </head>
+    <body>
+    
+    <!--if then logic here
+    //if user then go to messages home
+    //if professor user-> go to professor home
+    //if not-> go to sign up-->
+    
+    <section id="loadmessages"></section>
+
+    <!--replace with user name-->
+    <form id="set-nickname">
+      <label for="nickname">Nickname:</label>
+      <input type="text" id="nickname" />
+      <input type="submit" />
+    </form>
+    
+    <section id="nicknames"></section>
+    
+    <form id="send-message">
+        <textarea id="message"></textarea>
+        <input type="submit" value="Send message!" />
+    </form>
+    
+    <section id="messages"></section>
+    
+    <!-- build database and add professor_id and professor_message data here-->
+    <section id="professor_response">PROFESSOR COMMENT</section>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <script>
+      var socket = io.connect('http://localhost:3000');
+
+      socket.emit('loadmessages', {});
+
+
+      socket.on('loadmessages', function(message) {
+        for(var i = 0; i < messages.length; i++){
+            $('#loadmessages').append('<p>' + message[i].professor_name + ':' + message[i].professor_message + '</p>');
+        }
+      });
+
+      socket.on('nicknames', function(data) {
+          $('#nicknames').empty().append($('<ul>'));
+          for(var i=0; i<data.length; i++) {
+              $('#nicknames ul').append('<li>' + data[i] + '</li>');
+          }
+      });
+      socket.on('user message', function (data) {
+          $('#messages').append('<p><strong>' + data.nick + '</strong> ' +  data.message + '</p>');
+        });
+      socket.on('announcement', function (data) {
+          $('#messages').append($('<p>').append($('<em>').text(data.message)));
+      });
+
+      socket.on('callback', function(data) {
+        console.log(data.done);
+        $('#messages').append('<p><strong>' + data.message + '</p>');
+      });
+
+      
+      jQuery(function ($) { 
+        //var socket = io.connect('http://localhost:3000');
+        var nickName = $('#nickname');
+        var setNicknameForm = $('#set-nickname');
+        var messages = $('#messages');
+        setNicknameForm.submit(function(event) {
+          event.preventDefault(); 
+          socket.emit('nickname', nickName.val(), function (data) {
+            if (data) {
+              console.log('Nickname set successfully');
+              setNicknameForm.hide();
+              $('#send-message').show();
+            } else {
+              setNicknameForm.prepend('<p>Sorry - that nickname is already taken.');
+            }
+          });
+          return false;
+        });
+        $('#send-message').on('click', (function (event){
+            event.preventDefault();
+            socket.emit('user message', { 
+              student_message: $('#message').val()
+              });
+            $('#message').val('').focus();
+            return false;
+        });
+      });
+
+      
+
+    </script>
+
+    </body>
+</html>

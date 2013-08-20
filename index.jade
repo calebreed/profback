@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Profback.com</title>
+    <style></style>
+    </head>
+    <body>
+    
+    h1 Your kittens
+
+    -if(docs.length)
+      table
+        tr
+          th Kitten
+            each kitten in docs
+              tr
+                td #{kitten.kitten}
+    -else
+      p You don't have any Kittens!
+    
+    <!--if then logic here
+    //if user then go to messages home
+    //if professor user-> go to professor home
+    //if not-> go to sign up-->
+    
+    <!--replace with user name-->
+    <form id="set-nickname">
+      <label for="nickname">Nickname:</label>
+      <input type="text" id="nickname" />
+      <input type="submit" />
+    </form>
+    
+    <section id="nicknames"></section>
+    
+    <form id="send-message">
+        <textarea id="message"></textarea>
+        <input type="submit" value="Send message!" />
+    </form>
+    
+    <section id="messages"></section>
+    
+    <!-- build database and add professor_id and professor_message data here-->
+    <section id="professor_response">PROFESSOR COMMENT</section>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <script>
+      var socket = io.connect();
+      socket.on('nicknames', function(data) {
+          $('#nicknames').empty().append($('<ul>'));
+          for(var i=0; i<data.length; i++) {
+              $('#nicknames ul').append('<li>' + data[i] + '</li>');
+          }
+      });
+      socket.on('user message', function (data) {
+          $('#messages').append('<p><strong>' + data.nick + '</strong> ' +  data.message + '</p>');
+        });
+      socket.on('announcement', function (data) {
+          $('#messages').append($('<p>').append($('<em>').text(data.message)));
+      });
+      
+      jQuery(function ($) { 
+        var nickName = $('#nickname');
+        var setNicknameForm = $('#set-nickname');
+        var messages = $('#messages');
+        setNicknameForm.submit(function(event) {
+          event.preventDefault(); 
+          socket.emit('nickname', nickName.val(), function (data) {
+            if (data) {
+              console.log('Nickname set successfully');
+              setNicknameForm.hide();
+              $('#send-message').show();
+            } else {
+              setNicknameForm.prepend('<p>Sorry - that nickname is already taken.');
+            }
+          });
+          return false;
+        });
+        $('#send-message').submit(function (){
+            socket.emit('user message', $('#message').val());
+            $('#message').val('').focus();
+            return false;
+        })
+        
+      });
+    </script>
+
+    </body>
+</html>
